@@ -1,37 +1,45 @@
 package pojo;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
-
+/**
+ * POJO класс, представляющий сущность Response.
+ * <p>
+ * Этот класс используется для хранения ответа от API,
+ * который включает в себя информацию о сообщении, включая его
+ * заголовок, подтвержденность, важные числа и дополнительные поля.
+ * </p>
+ */
 @Getter
 @Setter
 @Builder
-/**
- * Pojo класс
- * Сущность pojo.Response
- */
 public class Response {
     /**
-     * Verified
+     * Флаг подтверждения, указывающий, было ли сообщение проверено.
      */
     boolean verified;
     /**
-     * id pojo.Response
+     * Уникальный идентификатор объекта Response.
      */
     private String id;
     /**
-     * pojo.Addition
+     * Дополнительная информация, связанная с сообщением.
      */
     private ResponseAddition responseAddition;
     /**
-     * important numbers
+     * Список важных чисел, связанных с сообщением.
+     * <p>
+     * Поле сериализуется из JSON как "important_numbers".
+     * </p>
      */
-    private List<Integer> important_numbers;
+    @SerializedName("important_numbers")
+    private List<Integer> importantNumbers;
     /**
-     * Title
+     * Заголовок сообщения.
      */
     private String title;
 }

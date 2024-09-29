@@ -1,123 +1,269 @@
 package tests;
 
+import io.qameta.allure.Description;
 import io.qameta.allure.Link;
+import io.qameta.allure.Step;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.specification.RequestSpecification;
-import jdk.jfr.Description;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import pojo.Addition;
 import pojo.Message;
 import pojo.Response;
 import util.BaseRequests;
+import util.ParametersProvider;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Класс тестирования функциональности точек доступа сервиса http://localhost:8080
- * Создание сущности: POST /api/create
- * Удаление сущности: DELETE /api/delete/{id}
- * Получение сущности: GET /api/get/{id}
- * Получение всех сущностей: GET /api/getAll
- * Обновление сущности: PATCH /api/patch/{id}
- * <p>Тесты используют аннотации JUnit 5 для настройки и выполнения тестов.</p>
+ * Класс тестирования функциональности REST API точек доступа сервиса.
+ * <p>
+ * Данный класс включает в себя тесты для следующих операций:
+ * <ul>
+ *     <li>Создание сущности: POST /api/create</li>
+ *     <li>Удаление сущности: DELETE /api/delete/{id}</li>
+ *     <li>Получение сущности: GET /api/get/{id}</li>
+ *     <li>Получение всех сущностей: GET /api/getAll</li>
+ *     <li>Обновление сущности: PATCH /api/patch/{id}</li>
+ * </ul>
+ * <p>
+ * Тесты используют аннотации JUnit 5 для настройки и выполнения тестов, а также Annotations Allure для генерации отчетов.
  */
-
 public class TestServiceTests {
-    /**
-     * Id по которому проходит тестирование и очистка сервиса
-     */
-    private String userId;
-    private RequestSpecification requestSpecification;
 
+    private String messageIdFirst;
+    private String messageIdSecond;
+    private RequestSpecification requestSpecification;
+    private ParametersProvider parametersProvider;
+    private Message messageForCreateFirst;
+    private Message messageForCreateSecond;
     /**
-     * Метод, выполняющийся перед каждым тестом. Конфигурирует запрос.
+     * Метод, выполняющийся перед каждым тестом.
+     * Конфигурирует запрос и инициализирует сообщения для тестирования.
+     *
+     * @param testInfo информация о текущем тесте
+     * @throws Exception если возникла ошибка при инициализации
      */
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp(TestInfo testInfo) throws Exception {
         requestSpecification = BaseRequests.initRequestSpecification();
+        parametersProvider = new ParametersProvider();
+        messageForCreateFirst = Message.builder()
+                .title(parametersProvider.getApi("title"))
+                .importantNumbers(Arrays.stream(parametersProvider.getApi("important.numbers")
+                                .split(",\\s*"))
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList()))
+                .verified(Boolean.parseBoolean(parametersProvider.getApi("verified")))
+                .addition(Addition.builder()
+                        .additionalInfo(parametersProvider.getApi("additonal.info"))
+                        .additionalNumber(Integer.parseInt(parametersProvider.getApi("additional.number")))
+                        .build())
+                .build();
+        if ("getAllMessageTest()".equals(testInfo.getDisplayName()) || "patchMessageByIdTest()".equals(testInfo.getDisplayName())) {
+            messageForCreateSecond = Message.builder()
+                    .title(parametersProvider.getApi("title1"))
+                    .importantNumbers(Arrays.stream(parametersProvider.getApi("important.numbers1")
+                                    .split(",\\s*"))
+                            .map(Integer::parseInt)
+                            .collect(Collectors.toList()))
+                    .verified(Boolean.parseBoolean(parametersProvider.getApi("verified1")))
+                    .addition(Addition.builder()
+                            .additionalInfo(parametersProvider.getApi("additonal.info1"))
+                            .additionalNumber(Integer.parseInt(parametersProvider.getApi("additional.number1")))
+                            .build())
+                    .build();
+        }
     }
-
     /**
-     * Тестиурет создание pojo.Message
+     * Тест для проверки создания сообщения.
+     * <p>
+     * Отправляет POST запрос для создания сообщения и проверяет,
+     * что сообщение было успешно создано.
      */
     @Test
-    @Description("Данный тест проверяет создание pojo.Message")
     @Link(name = "POST", url = "/api/create")
+    @Step("Создание сообщения")
+    @Description("Тестирует создание нового сообщения через API.")
     public void createMessageTest() {
-        Message messageForCreate = Message.builder().build();
-        userId = given().spec(requestSpecification).body(messageForCreate).when().post("/api/create").then().statusCode(200).extract().body().asString();
-        Response responseMessageById = given().spec(requestSpecification).when().get("/api/get/" + userId).then().statusCode(200).extract().as(Response.class, ObjectMapperType.GSON);
+        messageIdFirst = given()
+                .spec(requestSpecification)
+                .body(messageForCreateFirst)
+                .when()
+                .post(ParametersProvider.getApi("api.post"))
+                .then()
+                .statusCode(200)
+                .extract()
+                .body()
+                .asString();
+        Response responseMessageById = given()
+                .spec(requestSpecification)
+                .when()
+                .get(ParametersProvider.getApi("api.get") + messageIdFirst)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(Response.class, ObjectMapperType.GSON);
 
-        assertTrue(BaseRequests.comparingEntities(userId, messageForCreate, responseMessageById));
+        assertTrue(BaseRequests.comparingEntities(messageIdFirst, messageForCreateFirst, responseMessageById));
     }
-
     /**
-     * Тестиурет получение pojo.Message по id
+     * Тест для получения сообщения по ID.
+     * <p>
+     * Отправляет GET запрос для получения сообщения по его ID
+     * и проверяет, что полученное сообщение соответствует отправленному.
      */
     @Test
-    @Description("Данный тест проверяет получение pojo.Message по id")
     @Link(name = "GET", url = "/api/get/{id}")
+    @Step("Получение сообщения по ID")
+    @Description("Тестирует получение сообщения по ID через API.")
     public void getMessageByIdTest() {
-        Message messageForCreate = Message.builder().build();
-        userId = given().spec(requestSpecification).body(messageForCreate).when().post("/api/create").then().statusCode(200).extract().body().asString();
-        Response responseMessageById = given().when().get("/api/get/" + userId).then().statusCode(200).extract().as(Response.class, ObjectMapperType.GSON);
+        messageIdFirst = given()
+                .spec(requestSpecification)
+                .body(messageForCreateFirst)
+                .when()
+                .post(ParametersProvider.getApi("api.post"))
+                .then()
+                .statusCode(200)
+                .extract()
+                .body()
+                .asString();
+        Response responseMessageById = given()
+                .when()
+                .get(ParametersProvider.getApi("api.get") + messageIdFirst)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(Response.class, ObjectMapperType.GSON);
 
-        assertTrue(BaseRequests.comparingEntities(userId, messageForCreate, responseMessageById));
+        assertTrue(BaseRequests.comparingEntities(messageIdFirst, messageForCreateFirst, responseMessageById));
     }
-
     /**
-     * Тестиурет получение всех pojo.Message
+     * Тест для получения всех сообщений.
+     * <p>
+     * Отправляет GET запрос для получения всех сообщений
+     * и проверяет, что количество полученных сообщений соответствует ожиданиям.
      */
     @Test
-    @Description("Данный тест проверяет получение всех pojo.Message")
     @Link(name = "GET", url = "/api/all")
+    @Step("Получение всех сообщений")
+    @Description("Тестирует получение всех сообщений через API.")
     public void getAllMessageTest() {
-        Message messageForCreate = Message.builder().build();
-        userId = given().spec(requestSpecification).body(messageForCreate).when().post("/api/create").then().statusCode(200).extract().body().asString();
-        given().when().get("/api/getAll").then().statusCode(200);
+        messageIdFirst = given()
+                .spec(requestSpecification)
+                .body(messageForCreateFirst)
+                .when()
+                .post(ParametersProvider.getApi("api.post"))
+                .then()
+                .statusCode(200)
+                .extract()
+                .body()
+                .asString();
+        messageIdSecond = given()
+                .spec(requestSpecification)
+                .body(messageForCreateSecond)
+                .when()
+                .post(ParametersProvider.getApi("api.post"))
+                .then()
+                .statusCode(200)
+                .extract()
+                .body()
+                .asString();
+        given()
+                .when()
+                .get(ParametersProvider.getApi("api.getAll"))
+                .then()
+                .statusCode(200);
     }
-
     /**
-     * Тестиурет обновление pojo.Message
+     * Тест для обновления сообщения по ID.
+     * <p>
+     * Отправляет PATCH запрос для обновления сообщения и проверяет,
+     * что обновленное сообщение соответствует ожиданиям.
      */
     @Test
-    @Description("Данный тест проверяет обновление pojo.Message по id")
     @Link(name = "PATCH", url = "/api/patch/{id}")
+    @Step("Обновление сообщения по ID")
+    @Description("Тестирует обновление сообщения через API.")
     public void patchMessageByIdTest() {
-        Message messageForCreate = Message.builder().build();
-        userId = given().spec(requestSpecification).body(messageForCreate).when().post("/api/create").then().statusCode(200).extract().body().asString();
-        Message messagePatch = Message.builder().title("Сведения раз").important_numbers(List.of(01, 02, 03)).verified(true).addition(Addition.builder().additional_info("Дополнительные сведения раз").additional_number(234).build()).build();
-        given().spec(requestSpecification).body(messagePatch).when().patch("/api/patch/" + userId).then().statusCode(204);
-
-        Response responseMessageById = given().when().get("/api/get/" + userId).then().statusCode(200).extract().as(Response.class, ObjectMapperType.GSON);
-
-        assertTrue(BaseRequests.comparingEntities(userId, messagePatch, responseMessageById));
+        messageIdFirst = given()
+                .spec(requestSpecification)
+                .body(messageForCreateFirst)
+                .when()
+                .post(ParametersProvider.getApi("api.post"))
+                .then()
+                .statusCode(200)
+                .extract()
+                .body()
+                .asString();
+        given()
+                .spec(requestSpecification)
+                .body(messageForCreateSecond)
+                .when()
+                .patch(ParametersProvider.getApi("api.patch") + messageIdFirst)
+                .then()
+                .statusCode(204);
+        Response responseMessageById = given()
+                .when()
+                .get(ParametersProvider.getApi("api.get") + messageIdFirst)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(Response.class, ObjectMapperType.GSON);
+        assertTrue(BaseRequests.comparingEntities(messageIdFirst, messageForCreateSecond, responseMessageById));
     }
-
     /**
-     * Тестиурет удаление pojo.Message
+     * Тест для удаления сообщения по ID.
+     * <p>
+     * Отправляет DELETE запрос для удаления сообщения и проверяет,
+     * что сообщение успешно удалено.
      */
     @Test
-    @Description("Данный тест проверяет удаление pojo.Message по id")
     @Link(name = "DELETE", url = "/api/delete/{id}")
+    @Step("Удаление сообщения по ID")
+    @Description("Тестирует удаление сообщения через API.")
     public void deleteMessageByIdTest() {
-        Message messageForCreate = Message.builder().build();
-        userId = given().spec(requestSpecification).body(messageForCreate).when().post("/api/create").then().statusCode(200).extract().body().asString();
-        given().when().delete("/api/delete/" + userId).then().statusCode(204);
-        given().when().get("/api/get/" + userId).then().statusCode(500);
-        userId = given().spec(requestSpecification).body(messageForCreate).when().post("/api/create").then().statusCode(200).extract().body().asString();
+        messageIdFirst = given()
+                .spec(requestSpecification)
+                .body(messageForCreateFirst)
+                .when()
+                .post(ParametersProvider.getApi("api.post"))
+                .then()
+                .statusCode(200)
+                .extract()
+                .body()
+                .asString();
+        given()
+                .when()
+                .delete(ParametersProvider.getApi("api.delete") + messageIdFirst)
+                .then()
+                .statusCode(204);
+        given()
+                .when()
+                .get(ParametersProvider.getApi("api.get") + messageIdFirst)
+                .then()
+                .statusCode(500);
     }
-
     /**
-     * Очищает сервис после выполнения каждого теста.
+     * Метод, выполняющийся после каждого теста. Удаляет созданные сообщения.
+     *
+     * @param testInfo информация о текущем тесте
      */
     @AfterEach
-    public void tearDown() throws Exception {
-        BaseRequests.deleteMessageById(userId);
+    public void tearDown(TestInfo testInfo) {
+        if ("getAllMessageTest()".equals(testInfo.getDisplayName())) {
+            BaseRequests.deleteMessageById(messageIdSecond);
+        }
+        if (!"deleteMessageByIdTest()".equals(testInfo.getDisplayName())) {
+            BaseRequests.deleteMessageById(messageIdFirst);
+        }
     }
 }

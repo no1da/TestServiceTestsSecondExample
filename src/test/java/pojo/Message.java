@@ -1,5 +1,6 @@
 package pojo;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,31 +8,34 @@ import lombok.Setter;
 import java.util.List;
 
 /**
- * Pojo класс
- * Сущность pojo.Message
+ * POJO класс, представляющий сущность Message.
+ * <p>
+ * Этот класс используется для хранения информации о сообщении,
+ * включая его заголовок, подтвержденность, важные числа и дополнительные поля.
+ * </p>
  */
 @Getter
 @Setter
 @Builder
 public class Message {
     /**
-     * pojo.Addition
+     * Дополнительная информация, связанная с сообщением.
      */
-    @Builder.Default
-    private Addition addition = new Addition("Дополнительные сведения", 123);
+    private Addition addition;
     /**
-     * important numbers
+     * Список важных чисел, связанных с сообщением.
+     * <p>
+     * Поле сериализуется из JSON как "important_numbers".
+     * </p>
      */
-    @Builder.Default
-    private List<Integer> important_numbers = List.of(42,87,15);
+    @SerializedName("important_numbers")
+    private List<Integer> importantNumbers;
     /**
-     * Title
+     * Заголовок сообщения.
      */
-    @Builder.Default
-    private String title = "Заголовок сущности";
+    private String title;
     /**
-     * Verified
+     * Флаг, указывающий, было ли сообщение проверено.
      */
-    @Builder.Default
-    boolean verified = true;
+    private boolean verified;
 }

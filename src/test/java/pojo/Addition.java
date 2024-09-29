@@ -1,25 +1,36 @@
 package pojo;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Pojo класс
- * Сущность pojo.Addition
+ * POJO класс, представляющий сущность Addition.
+ * <p>
+ * Этот класс используется для хранения дополнительной информации,
+ * связанной с сообщением. Он включает в себя поля для дополнительной
+ * информации и дополнительного числа.
+ * </p>
  */
 @Getter
 @Setter
 @Builder
 public class Addition {
     /**
-     * pojo.Addition info
+     * Дополнительная информация, связанная с сущностью Addition.
+     * <p>
+     * Поле сериализуется из JSON как "additional_info".
+     * </p>
      */
-    @Builder.Default
-    private String additional_info = "Дополнительные сведения";
+    @SerializedName("additional_info")
+    private String additionalInfo;
     /**
-     * Additional number
+     * Дополнительный номер, связанный с сущностью Addition.
+     * <p>
+     * Поле сериализуется из JSON как "additional_number".
+     * </p>
      */
-    @Builder.Default
-    private Integer additional_number = 123;
+    @SerializedName("additional_number")
+    private Integer additionalNumber;
 }

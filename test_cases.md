@@ -94,9 +94,7 @@ Body с числом (id).
 ### Ожидаемый результат:
 Статус-код : 200
 Response Body с JSON.
-
-### Проверка:
-1. Сравнить JSON из POST запроса с JSON из Response.
+Сравнить JSON из POST запроса с JSON из Response.
 
 ---
 ## Тест-кейс 3: Получение всех Message (GET /api/getALL)
@@ -180,22 +178,6 @@ Response Body с JSON.
 ### Ожидаемый результат:
 Статус-код : 200
 
-### Проверка:
-1. Отправить GET-запрос на http://localhost:8080//api/get/{полученныйid}
-2. Получить Body с JSON:
-   {
-   "id": {полученныйid},
-   "title": "Сведения раз",
-   "verified": true,
-   "addition": {
-   "id": {полученныйid},
-   "additional_info": "Дополнительные сведения раз",
-   "additional_number": 123
-   },
-   "important_numbers": [ 01, 02, 03 ],
-   }.
-3. Сравнить JSON из POST запроса с JSON из Response.
-
 ---
 ## Тест-кейс 5: Удаление Message по id (DELETE /api/delete/{id})
 
@@ -224,8 +206,3 @@ Response Body с JSON.
 
 ### Ожидаемый результат:
 Статус-код : 204
-
-### Проверка:
-1. Отправить GET-запрос на http://localhost:8080//api/get/{полученныйid}
-2. Получить статус-код: 500
----
